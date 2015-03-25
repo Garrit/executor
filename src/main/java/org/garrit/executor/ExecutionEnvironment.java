@@ -1,6 +1,7 @@
 package org.garrit.executor;
 
 import java.io.Closeable;
+import java.io.IOException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +27,7 @@ public abstract class ExecutionEnvironment implements Closeable
      * 
      * @param command the command to execute
      */
-    public abstract EnvironmentResponse execute(String command);
+    public abstract EnvironmentResponse execute(String command) throws IOException;
 
     /**
      * The response to executing a command in the environment.
