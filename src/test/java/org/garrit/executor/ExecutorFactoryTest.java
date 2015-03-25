@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
-import org.garrit.common.Problem;
+import org.garrit.common.ProblemCase;
 import org.garrit.common.messages.ExecutionCase;
 import org.garrit.common.messages.RegisteredSubmission;
 import org.garrit.common.messages.SubmissionFile;
@@ -78,7 +78,7 @@ public class ExecutorFactoryTest
         }
 
         @Override
-        public ExecutionCase evaluate(Problem problem)
+        public ExecutionCase evaluate(ProblemCase problemCase)
         {
             return null;
         }

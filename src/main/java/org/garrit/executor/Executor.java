@@ -50,10 +50,10 @@ public abstract class Executor implements Closeable
     /**
      * Execute the submission for a given problem.
      * 
-     * @param problem the problem
+     * @param problemCase the problem
      * @return the results of problem execution
      */
-    public abstract ExecutionCase evaluate(ProblemCase problem);
+    public abstract ExecutionCase evaluate(ProblemCase problemCase);
 
     /**
      * Clean up the environment.
