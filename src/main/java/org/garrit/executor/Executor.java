@@ -41,7 +41,7 @@ public abstract class Executor implements Closeable
 
     /**
      * Perform any necessary compilation of the submission. To be called before
-     * any invocations of <code>{@link Executor#execute(Problem)}</code>. This
+     * any invocations of <code>{@link Executor#evaluate(Problem)}</code>. This
      * may be a no-op for executors for interpreted languages.
      */
     public abstract void compile();
@@ -52,7 +52,7 @@ public abstract class Executor implements Closeable
      * @param problem the problem
      * @return the results of problem execution
      */
-    public abstract ExecutionCase execute(Problem problem);
+    public abstract ExecutionCase evaluate(Problem problem);
 
     /**
      * Clean up the environment.
