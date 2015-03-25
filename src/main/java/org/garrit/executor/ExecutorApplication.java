@@ -3,6 +3,8 @@ package org.garrit.executor;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 
+import java.util.Map;
+
 import org.garrit.common.messages.statuses.Status;
 
 /**
@@ -30,6 +32,11 @@ public class ExecutorApplication extends Application<ExecutorConfiguration>
     @Override
     public void run(ExecutorConfiguration config, Environment env) throws Exception
     {
+        for (Map.Entry<String, String> executorEntry : config.getExecutors().entrySet())
+            ExecutorFactory.registerExecutor(
+                    executorEntry.getKey(),
+                    Class.forName(executorEntry.getValue()).asSubclass(Executor.class));
+
         this.executor = new ExecutionManager(config.getProblems());
 
         this.status = new Status(config.getName());

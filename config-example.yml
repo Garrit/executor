@@ -1,2 +1,5 @@
 name: exec-00
 problems: /path/to/problem/definitions
+
+executors:
+    java: org.garrit.executor.JavaExecutor
