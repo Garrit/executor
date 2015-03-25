@@ -2,6 +2,7 @@ package org.garrit.executor;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import lombok.RequiredArgsConstructor;
 
@@ -16,11 +17,28 @@ import org.garrit.common.messages.SubmissionFile;
 public abstract class ExecutionEnvironment implements Closeable
 {
     /**
-     * Unpack a collection of submission files into the environment.
+     * Unpack a collection of submission files into the environment. An
+     * implementation is responsible for destroying any files created within the
+     * environment by this method when <code>{@link #close()}</code> is called.
      * 
      * @param files the files to unpack
      */
     public abstract void unpack(SubmissionFile[] files);
+
+    /**
+     * Create a file within the environment for input to a program. The
+     * environment is responsible for generating a filename for the file and
+     * locating it within the environment such that it does not conflict with
+     * any other files.
+     * 
+     * As with files {@link #unpack(SubmissionFile[] unpacked} from the
+     * submission, an implementation is responsible for destroying any files
+     * created by this method when <code>{@link #close()}</code> is called.
+     * 
+     * @param input the input file contents
+     * @return the path of the file within the environment
+     */
+    public abstract Path unpackInput(byte[] input);
 
     /**
      * Execute a command within the environment.

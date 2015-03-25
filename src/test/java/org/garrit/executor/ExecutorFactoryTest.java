@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 import org.garrit.common.ProblemCase;
 import org.garrit.common.messages.ExecutionCase;
@@ -51,6 +52,12 @@ public class ExecutorFactoryTest
         @Override
         public void unpack(SubmissionFile[] files)
         {
+        }
+
+        @Override
+        public Path unpackInput(byte[] input)
+        {
+            return null;
         }
 
         @Override
