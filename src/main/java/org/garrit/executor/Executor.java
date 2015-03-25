@@ -6,6 +6,7 @@ import java.io.IOException;
 import lombok.Getter;
 
 import org.garrit.common.Problem;
+import org.garrit.common.ProblemCase;
 import org.garrit.common.messages.ExecutionCase;
 import org.garrit.common.messages.RegisteredSubmission;
 import org.garrit.common.messages.Submission;
@@ -52,7 +53,7 @@ public abstract class Executor implements Closeable
      * @param problem the problem
      * @return the results of problem execution
      */
-    public abstract ExecutionCase evaluate(Problem problem);
+    public abstract ExecutionCase evaluate(ProblemCase problem);
 
     /**
      * Clean up the environment.
