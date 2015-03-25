@@ -43,7 +43,7 @@ public class ExecutionManager implements ExecutorStatus
     @Override
     public Iterable<String> getLanguages()
     {
-        return null;
+        return ExecutorFactory.availableLanguages();
     }
 
     @Override
