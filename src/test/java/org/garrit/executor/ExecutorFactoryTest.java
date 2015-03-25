@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import org.garrit.common.ProblemCase;
 import org.garrit.common.messages.ExecutionCase;
@@ -50,7 +51,7 @@ public class ExecutorFactoryTest
     public static class MockEnvironment extends ExecutionEnvironment
     {
         @Override
-        public void unpack(SubmissionFile[] files)
+        public void unpack(List<SubmissionFile> files)
         {
         }
 

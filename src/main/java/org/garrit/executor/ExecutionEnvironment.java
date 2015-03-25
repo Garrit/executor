@@ -3,6 +3,7 @@ package org.garrit.executor;
 import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,7 +24,7 @@ public abstract class ExecutionEnvironment implements Closeable
      * 
      * @param files the files to unpack
      */
-    public abstract void unpack(SubmissionFile[] files);
+    public abstract void unpack(List<SubmissionFile> files);
 
     /**
      * Create a file within the environment for input to a program. The
