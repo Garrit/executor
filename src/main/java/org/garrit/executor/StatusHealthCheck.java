@@ -1,6 +1,6 @@
 package org.garrit.executor;
 
-import org.garrit.common.statuses.Status;
+import org.garrit.common.messages.statuses.Status;
 
 import com.codahale.metrics.health.HealthCheck;
 

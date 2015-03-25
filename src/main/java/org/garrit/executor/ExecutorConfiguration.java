@@ -1,6 +1,9 @@
 package org.garrit.executor;
 
 import io.dropwizard.Configuration;
+
+import java.nio.file.Path;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -9,4 +12,5 @@ import lombok.EqualsAndHashCode;
 public class ExecutorConfiguration extends Configuration
 {
     private String name;
+    private Path problems;
 }

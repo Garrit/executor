@@ -1,47 +1,65 @@
 package org.garrit.executor;
 
-import io.dropwizard.Application;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import java.io.Closeable;
+import java.io.IOException;
 
-import org.garrit.common.statuses.Status;
+import lombok.Getter;
+
+import org.garrit.common.Problem;
+import org.garrit.common.messages.ExecutionCase;
+import org.garrit.common.messages.RegisteredSubmission;
+import org.garrit.common.messages.Submission;
 
 /**
- * Main entry point for the executor service.
+ * An executor is capable of instructing the {@link ExecutionEnvironment
+ * environment} to evaluate a {@link Submission submission}.
  *
  * @author Samuel Coleman <samuel@seenet.ca>
  * @since 1.0.0
  */
-public class Executor extends Application<ExecutorConfiguration>
+public abstract class Executor implements Closeable
 {
-    private Status status;
+    @Getter
+    private final RegisteredSubmission submission;
+    @Getter
+    private final ExecutionEnvironment environment;
 
-    public static void main(String[] args) throws Exception
+    /**
+     * Set up the executor for a given submission and environment. The default
+     * constructor unpacks the submission files into the environment.
+     * 
+     * @param submission the submission
+     * @param environment environment
+     */
+    public Executor(RegisteredSubmission submission, ExecutionEnvironment environment)
     {
-        new Executor().run(args);
+        this.submission = submission;
+        this.environment = environment;
+
+        this.environment.unpack(submission.getFiles());
     }
 
+    /**
+     * Perform any necessary compilation of the submission. To be called before
+     * any invocations of <code>{@link Executor#execute(Problem)}</code>. This
+     * may be a no-op for executors for interpreted languages.
+     */
+    public abstract void compile();
+
+    /**
+     * Execute the submission for a given problem.
+     * 
+     * @param problem the problem
+     * @return the results of problem execution
+     */
+    public abstract ExecutionCase execute(Problem problem);
+
+    /**
+     * Clean up the environment.
+     */
     @Override
-    public String getName()
+    public void close() throws IOException
     {
-        return Executor.class.getName();
-    }
-
-    @Override
-    public void initialize(Bootstrap<ExecutorConfiguration> bootstrap)
-    {
-    }
-
-    @Override
-    public void run(ExecutorConfiguration config, Environment env) throws Exception
-    {
-        this.status = new Status(config.getName());
-        final StatusResource statusResource = new StatusResource(this.status);
-
-        env.jersey().register(statusResource);
-
-        final StatusHealthCheck statusHealthCheck = new StatusHealthCheck(status);
-
-        env.healthChecks().register("status", statusHealthCheck);
+        this.environment.close();
     }
 }
