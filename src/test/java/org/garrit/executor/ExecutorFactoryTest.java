@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.garrit.common.ProblemCase;
@@ -51,8 +52,9 @@ public class ExecutorFactoryTest
     public static class MockEnvironment extends ExecutionEnvironment
     {
         @Override
-        public void unpack(List<SubmissionFile> files)
+        public Path unpack(List<SubmissionFile> files)
         {
+            return Paths.get(".");
         }
 
         @Override
@@ -62,7 +64,7 @@ public class ExecutorFactoryTest
         }
 
         @Override
-        public EnvironmentResponse execute(String command) throws IOException
+        public EnvironmentResponse execute(String command, long timeout) throws IOException
         {
             return null;
         }

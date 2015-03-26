@@ -23,8 +23,9 @@ public abstract class ExecutionEnvironment implements Closeable
      * environment by this method when <code>{@link #close()}</code> is called.
      * 
      * @param files the files to unpack
+     * @return the path of the parent directory to the unpacked files
      */
-    public abstract void unpack(List<SubmissionFile> files);
+    public abstract Path unpack(List<SubmissionFile> files);
 
     /**
      * Create a file within the environment for input to a program. The
@@ -45,8 +46,11 @@ public abstract class ExecutionEnvironment implements Closeable
      * Execute a command within the environment.
      * 
      * @param command the command to execute
+     * @param timeout the timeout for execution in seconds
+     * @return the output of the command
+     * @throws IOException if a failure occurs while executing the command
      */
-    public abstract EnvironmentResponse execute(String command) throws IOException;
+    public abstract EnvironmentResponse execute(String command, long timeout) throws IOException;
 
     /**
      * The response to executing a command in the environment.
