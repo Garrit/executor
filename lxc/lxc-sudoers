@@ -1,0 +1,7 @@
+# Relocate this file to /etc/sudoers.d/ to permit passwordless sudo for the
+# execution of some critical lxc commands.
+
+%sudo ALL = (root) NOPASSWD: /usr/bin/lxc-create
+%sudo ALL = (root) NOPASSWD: /usr/bin/lxc-destroy
+%sudo ALL = (root) NOPASSWD: /usr/bin/lxc-execute
+%sudo ALL = (root) NOPASSWD: /usr/bin/lxc-ls

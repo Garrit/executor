@@ -1,0 +1,125 @@
+#! /bin/sh
+
+# LXC template for Garrit execution environments.
+#
+# Author: Samuel Coleman <samuel@seenet.ca>
+
+usage()
+{
+    echo `basename "$1"`" -h|--help -p|--path=<path>" 1>&2
+    return 0
+}
+
+options=`getopt \
+-o hp:n: \
+-l help,rootfs:,path:,name:,mapped-uid:,mapped-gid: \
+-- "$@"`
+if [ $? -ne 0 ]
+then
+    usage $0
+	exit 1
+fi
+eval set -- "$options"
+
+while true
+do
+    case "$1" in
+        -h|--help)      usage $0 && exit 0;;
+        -p|--path)      path=$2; shift 2;;
+        --rootfs)       rootfs=$2; shift 2;;
+        -n|--name)      name=$2; shift 2;;
+        --mapped-uid)   unprivileged=true; shift 2;;
+        --mapped-gid)   unprivileged=true; shift 2;;
+        --) shift 1; break ;;
+        *) break ;;
+    esac
+done
+
+if [ "$unprivileged" = true ]
+then
+    echo "The Garrit template is incompatible with unprivileged containers."
+    exit 2
+fi
+
+if [ -z "$name" ]
+then
+    echo "A container name must be given." 1>&2
+    exit 2
+fi
+
+if [ -z "$path" ]
+then
+    echo "An output path must be given." 1>&2
+    exit 3
+fi
+
+if [ -z "$rootfs" ]
+then
+    rootfs="$path"/rootfs
+fi
+
+# Create the directory structure.
+mkdir -p \
+    "$rootfs"/bin \
+    "$rootfs"/dev/pts \
+    "$rootfs"/dev/shm \
+    "$rootfs"/etc \
+    "$rootfs"/etc/alternatives \
+    "$rootfs"/lib \
+    "$rootfs"/lib64 \
+    "$rootfs"/proc \
+    "$rootfs"/tmp \
+    "$rootfs"/usr/bin \
+    "$rootfs"/usr/include \
+    "$rootfs"/usr/lib \
+    "$rootfs"/usr/local/bin \
+    "$rootfs"/usr/sbin \
+    "$rootfs"/sbin \
+    \
+    "$rootfs"/garrit/sumission \
+    "$rootfs"/garrit/input
+
+chmod -R 0777 "$rootfs"/garrit
+chmod 1777 "$rootfs"/tmp
+
+# Populate the /dev tree inside the container.
+mknod -m 0666 "$rootfs"/dev/null c 1 3
+mknod -m 0666 "$rootfs"/dev/zero c 1 5
+mknod -m 0666 "$rootfs"/dev/full c 1 7
+mknod -m 0666 "$rootfs"/dev/random c 1 8
+mknod -m 0666 "$rootfs"/dev/urandom c 1 9
+mknod -m 0666 "$rootfs"/dev/tty c 5 0
+mknod -m 0666 "$rootfs"/dev/tty0 c 4 0
+mknod -m 0600 "$rootfs"/dev/console c 5 1
+mknod -m 0600 "$rootfs"/dev/ptmx c 5 2
+mkfifo -m 0600 "$rootfs"/dev/initctl
+
+chmod 0755 "$rootfs"/dev/pts
+chmod 1777 "$rootfs"/dev/shm
+
+# Populate user information.
+cat <<EOF >> "$rootfs"/etc/passwd
+root:x:0:0:root:/root:/bin/false
+EOF
+
+cat <<EOF >> "$rootfs"/etc/group
+root:x:0:
+EOF
+
+# Write out the container config.
+cat <<EOF >> $path/config
+
+lxc.utsname = $name
+lxc.pts = 1
+
+lxc.mount.entry=/bin bin none ro,bind 0 0
+lxc.mount.entry=/etc/alternatives etc/alternatives none ro,bind 0 0
+lxc.mount.entry=/lib lib none ro,bind 0 0
+lxc.mount.entry=/lib64 lib64 none ro,bind 0 0
+lxc.mount.entry=/usr/bin usr/bin none ro,bind 0 0
+lxc.mount.entry=/usr/include usr/include none ro,bind 0 0
+lxc.mount.entry=/usr/lib usr/lib none ro,bind 0 0
+lxc.mount.entry=/usr/local/bin usr/local/bin none ro,bind 0 0
+lxc.mount.entry=/usr/sbin usr/sbin none ro,bind 0 0
+lxc.mount.entry=/sbin sbin none ro,bind 0 0
+EOF
