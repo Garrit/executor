@@ -20,7 +20,7 @@ if [  $? -eq 0 ]
 then
     echo " passed."
     echo "Installing sudoers file..."
-    #cp lxc-sudoers /etc/sudoers.d/lxc-sudoers
+    cp lxc-sudoers /etc/sudoers.d/lxc-sudoers
 else
     echo " failed!"
     echo "Skipping sudoers file installation. \`visudo -c -f lxc-sudoers\` may provide more insight into the problem."
