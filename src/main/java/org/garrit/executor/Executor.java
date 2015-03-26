@@ -2,6 +2,7 @@ package org.garrit.executor;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import lombok.Getter;
 
@@ -24,6 +25,8 @@ public abstract class Executor implements Closeable
     private final RegisteredSubmission submission;
     @Getter
     private final ExecutionEnvironment environment;
+    @Getter
+    private final Path unpackedPath;
 
     /**
      * Set up the executor for a given submission and environment. The default
@@ -37,7 +40,7 @@ public abstract class Executor implements Closeable
         this.submission = submission;
         this.environment = environment;
 
-        this.environment.unpack(submission.getFiles());
+        this.unpackedPath = this.environment.unpack(submission.getFiles());
     }
 
     /**
