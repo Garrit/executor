@@ -76,7 +76,7 @@ mkdir -p \
     "$rootfs"/usr/sbin \
     "$rootfs"/sbin \
     \
-    "$rootfs"/garrit/sumission \
+    "$rootfs"/garrit/submission \
     "$rootfs"/garrit/input
 
 chmod -R 0777 "$rootfs"/garrit
