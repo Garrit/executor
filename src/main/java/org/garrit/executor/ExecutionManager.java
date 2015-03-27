@@ -66,6 +66,8 @@ public class ExecutionManager implements ExecutorStatus, Closeable
      */
     public void enqueue(RegisteredSubmission submission) throws UnavailableExecutorException
     {
+        log.debug("Enqueuing submission {}", submission);
+
         if (ExecutorFactory.executorExists(submission))
             throw new UnavailableExecutorException("No executor available for language");
 
@@ -251,6 +253,8 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                         log.error("Failed to encode outgoing execution object to JSON", e);
                         continue;
                     }
+
+                    post.setHeader("Content-Type", "application/json");
                     post.setEntity(body);
 
                     try
