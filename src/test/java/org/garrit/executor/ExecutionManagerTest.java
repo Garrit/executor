@@ -11,13 +11,15 @@ import org.junit.Test;
 public class ExecutionManagerTest
 {
     @Test
-    public void testEnqueuesProblems()
+    public void testEnqueuesProblems() throws Exception
     {
         RegisteredSubmission submission = new RegisteredSubmission();
         submission.setId(0);
+        submission.setLanguage("foo");
 
         ExecutionManager executor = new ExecutionManager(Paths.get("."));
         executor.enqueue(submission);
+        executor.close();
 
         assertEquals(1, executor.getQueued().size());
         assertTrue(executor.getQueued().contains(0));
