@@ -51,9 +51,9 @@ public abstract class Executor implements Closeable
     public abstract void compile();
 
     /**
-     * Execute the submission for a given problem.
+     * Execute the submission for a given problem case.
      * 
-     * @param problemCase the problem
+     * @param problemCase the problem case
      * @return the results of problem execution
      * @throws IOException if an error occurs while evaluating
      */
