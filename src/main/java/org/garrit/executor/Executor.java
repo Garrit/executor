@@ -35,7 +35,7 @@ public abstract class Executor implements Closeable
      * @param submission the submission
      * @param environment environment
      */
-    public Executor(RegisteredSubmission submission, ExecutionEnvironment environment)
+    public Executor(RegisteredSubmission submission, ExecutionEnvironment environment) throws IOException
     {
         this.submission = submission;
         this.environment = environment;
@@ -55,8 +55,9 @@ public abstract class Executor implements Closeable
      * 
      * @param problemCase the problem
      * @return the results of problem execution
+     * @throws IOException if an error occurs while evaluating
      */
-    public abstract ExecutionCase evaluate(ProblemCase problemCase);
+    public abstract ExecutionCase evaluate(ProblemCase problemCase) throws IOException;
 
     /**
      * Clean up the environment.

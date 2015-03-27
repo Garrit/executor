@@ -24,8 +24,9 @@ public abstract class ExecutionEnvironment implements Closeable
      * 
      * @param files the files to unpack
      * @return the path of the parent directory to the unpacked files
+     * @throws IOException if an error occurs while unpacking
      */
-    public abstract Path unpack(List<SubmissionFile> files);
+    public abstract Path unpack(List<SubmissionFile> files) throws IOException;
 
     /**
      * Create a file within the environment for input to a program. The
@@ -39,8 +40,9 @@ public abstract class ExecutionEnvironment implements Closeable
      * 
      * @param input the input file contents
      * @return the path of the file within the environment
+     * @throws IOException if an error occurs while unpacking
      */
-    public abstract Path unpackInput(byte[] input);
+    public abstract Path unpackInput(byte[] input) throws IOException;
 
     /**
      * Execute a command within the environment.
@@ -59,8 +61,12 @@ public abstract class ExecutionEnvironment implements Closeable
      * @since 1.0.0
      */
     @RequiredArgsConstructor
-    public class EnvironmentResponse
+    public static class EnvironmentResponse
     {
+        /**
+         * The exit code of the process.
+         */
+        public final int exitCode;
         /**
          * The response on stdout.
          */

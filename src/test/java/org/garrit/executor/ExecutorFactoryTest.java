@@ -77,7 +77,7 @@ public class ExecutorFactoryTest
 
     public static class MockExecutor extends Executor
     {
-        public MockExecutor(RegisteredSubmission submission, ExecutionEnvironment environment)
+        public MockExecutor(RegisteredSubmission submission, ExecutionEnvironment environment) throws IOException
         {
             super(submission, environment);
         }
