@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Set;
 
 import org.garrit.common.messages.RegisteredSubmission;
+import org.garrit.common.messages.Submission;
 
 /**
  * Provides access to {@link Executor problem executors}.
@@ -70,5 +71,14 @@ public class ExecutorFactory
     public static Set<String> availableLanguages()
     {
         return Collections.unmodifiableSet(executors.keySet());
+    }
+
+    /**
+     * @param submission a submission
+     * @return whether or not an executor suitable for the submission exists
+     */
+    public static boolean executorExists(Submission submission)
+    {
+        return executors.keySet().contains(submission.getLanguage().toLowerCase());
     }
 }

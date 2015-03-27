@@ -43,11 +43,15 @@ public class ExecutorApplication extends Application<ExecutorConfiguration>
         this.status.setCapabilityStatus(executor);
 
         final StatusResource statusResource = new StatusResource(this.status);
+        final ExecuteResource executeResource = new ExecuteResource(this.executor);
 
         env.jersey().register(statusResource);
+        env.jersey().register(executeResource);
 
         final StatusHealthCheck statusHealthCheck = new StatusHealthCheck(status);
 
         env.healthChecks().register("status", statusHealthCheck);
+
+        this.executor.start();
     }
 }

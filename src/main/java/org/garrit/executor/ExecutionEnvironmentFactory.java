@@ -13,7 +13,7 @@ public class ExecutionEnvironmentFactory
     /**
      * @return a new execution environment
      */
-    public static ExecutionEnvironment geExecutionEnvironment() throws IOException
+    public static ExecutionEnvironment getExecutionEnvironment() throws IOException
     {
         return new LXCEnvironment();
     }
