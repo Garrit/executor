@@ -1,5 +1,5 @@
 name: exec-00
-negotiator: http://negotiator:7165
+negotiator: http://negotiator:7165/
 problems: /path/to/problem/definitions
 
 executors:
