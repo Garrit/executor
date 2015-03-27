@@ -52,7 +52,24 @@ public abstract class ExecutionEnvironment implements Closeable
      * @return the output of the command
      * @throws IOException if a failure occurs while executing the command
      */
-    public abstract EnvironmentResponse execute(String command, long timeout) throws IOException;
+    public EnvironmentResponse execute(List<String> command, long timeout) throws IOException
+    {
+        return this.execute(command, null, timeout);
+    }
+
+    /**
+     * Execute a command within the environment. The given input is fed into the
+     * process being executed via <code>stdin</code>. Input may be given as
+     * null, in which case no input is given to the child process.
+     * 
+     * @param command the command to execute
+     * @param input stdin for the program being executed
+     * @param timeout the timeout for execution in seconds
+     * @return the output of the command
+     * @throws IOException if a failure occurs while executing the command
+     */
+    public abstract EnvironmentResponse execute(List<String> command, String input, long timeout)
+            throws IOException;
 
     /**
      * The response to executing a command in the environment.

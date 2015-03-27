@@ -59,7 +59,7 @@ public class JavaExecutorTest
             executor.evaluate(problemCase);
         }
 
-        assertEquals("cputime java -cp /input Hello < " + SpyEnvironment.INPUT_FILENAME, environment.getCommand());
+        assertEquals("cputime java -cp /input Hello", environment.getCommand());
     }
 
     @Getter
@@ -70,7 +70,8 @@ public class JavaExecutorTest
 
         private List<SubmissionFile> files;
         private byte[] input;
-        private String command;
+        private List<String> command;
+        private String commandInput;
         private boolean closed = false;
 
         @Override
@@ -88,9 +89,10 @@ public class JavaExecutorTest
         }
 
         @Override
-        public EnvironmentResponse execute(String command, long timeout) throws IOException
+        public EnvironmentResponse execute(List<String> command, String input, long timeout) throws IOException
         {
             this.command = command;
+            this.commandInput = input;
             return new EnvironmentResponse(0, "", "0");
         }
 

@@ -1,14 +1,20 @@
 package org.garrit.executor;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.garrit.common.messages.SubmissionFile;
 
@@ -22,9 +28,11 @@ import org.garrit.common.messages.SubmissionFile;
  */
 public class LXCEnvironment extends ExecutionEnvironment
 {
-    private static final String CONTAINER_NAME_FORMAT = "ge-%02x";
-    private static final String SUBMISSIONS_PATH = "garrit/submissions";
+    private static final String CONTAINER_NAME_FORMAT = "garrit-exec-%02x";
+    private static final String SUBMISSIONS_PATH = "garrit/submission";
     private static final String INPUT_PATH = "garrit/input";
+
+    private static final int LXC_ADMIN_TIMEOUT = 10;
 
     private final String containerName;
     private final Path containerRoot;
@@ -34,7 +42,12 @@ public class LXCEnvironment extends ExecutionEnvironment
         this.containerName = generateContainerName();
         this.containerRoot = Files.createTempDirectory("garrit");
 
-        executeCommand("sudo lxc-create -t garrit -n " + this.containerName + " --dir " + this.containerRoot, 10);
+        executeCommand(
+                Arrays.asList(
+                        "sudo", "lxc-create", "-t", "garrit", "-n", this.containerName, "--dir",
+                        this.containerRoot.toString()),
+                null,
+                LXC_ADMIN_TIMEOUT);
     }
 
     @Override
@@ -51,7 +64,7 @@ public class LXCEnvironment extends ExecutionEnvironment
             }
         }
 
-        return submissionsRoot;
+        return Paths.get("/").resolve(SUBMISSIONS_PATH);
     }
 
     @Override
@@ -64,24 +77,32 @@ public class LXCEnvironment extends ExecutionEnvironment
             stream.write(input);
         }
 
-        return inputPath;
+        return Paths.get("/").resolve(INPUT_PATH);
     }
 
     @Override
-    public EnvironmentResponse execute(String command, long timeout) throws IOException
+    public EnvironmentResponse execute(List<String> command, String input, long timeout) throws IOException
     {
-        return executeCommand("lxc-execute -n " + this.containerName + " -- " + command, timeout);
+        ArrayList<String> wrappedCommand = new ArrayList<>(command.size() + 5);
+        wrappedCommand.addAll(Arrays.asList("sudo", "lxc-execute", "-n", this.containerName, "--"));
+        wrappedCommand.addAll(command);
+
+        return executeCommand(wrappedCommand, input, timeout);
     }
 
     @Override
     public void close() throws IOException
     {
-        executeCommand("sudo lxc-destroy -n " + this.containerName, 10);
+        executeCommand(Arrays.asList("sudo", "lxc-destroy", "-n", this.containerName),
+                null,
+                LXC_ADMIN_TIMEOUT);
     }
 
     private static String generateContainerName() throws IOException
     {
-        EnvironmentResponse response = executeCommand("sudo lxc-ls -1", 10);
+        EnvironmentResponse response = executeCommand(Arrays.asList("sudo", "lxc-ls", "-1"),
+                null,
+                LXC_ADMIN_TIMEOUT);
         List<String> existingContainers = Arrays.asList(response.stdout.split("\n"));
 
         String containerName;
@@ -94,10 +115,24 @@ public class LXCEnvironment extends ExecutionEnvironment
         return containerName;
     }
 
-    private static EnvironmentResponse executeCommand(String command, long timeout) throws IOException
+    private static EnvironmentResponse executeCommand(List<String> command, String input, long timeout)
+            throws IOException
     {
-        ProcessBuilder builder = new ProcessBuilder("sudo", "lxc-ls", "-1");
+        ProcessBuilder builder = new ProcessBuilder(command);
         Process process = builder.start();
+
+        StreamConsumer stdoutConsumer = new StreamConsumer(process.getInputStream());
+        StreamConsumer stderrConsumer = new StreamConsumer(process.getErrorStream());
+
+        stdoutConsumer.start();
+        stderrConsumer.start();
+
+        if (input != null)
+        {
+            BufferedOutputStream stdinStream = new BufferedOutputStream(process.getOutputStream());
+            stdinStream.write(input.getBytes());
+            stdinStream.close();
+        }
 
         boolean finished;
         try
@@ -116,17 +151,46 @@ public class LXCEnvironment extends ExecutionEnvironment
         }
 
         int exitCode = process.exitValue();
-        String stdout = consumeStream(process.getInputStream());
-        String stderr = consumeStream(process.getErrorStream());
+        String stdout = stdoutConsumer.getConsumed();
+        String stderr = stderrConsumer.getConsumed();
+
+        process.destroy();
 
         return new EnvironmentResponse(exitCode, stdout, stderr);
     }
 
-    private static String consumeStream(InputStream stream)
+    @RequiredArgsConstructor
+    @Slf4j
+    private static class StreamConsumer extends Thread
     {
-        try (Scanner scanner = new Scanner(stream))
+        private final InputStream stream;
+        private final StringBuilder builder = new StringBuilder();
+
+        @Override
+        public void run()
         {
-            return scanner.useDelimiter("\\A").next();
+            try
+            {
+                BufferedInputStream bufferedStream = new BufferedInputStream(this.stream);
+
+                int c;
+                while ((c = bufferedStream.read()) >= 0)
+                    this.builder.append((char) c);
+
+                this.stream.close();
+            }
+            catch (IOException e)
+            {
+                log.error("Failure consuming stream", e);
+            }
+        }
+
+        /**
+         * @return get the output of the stream so far
+         */
+        public String getConsumed()
+        {
+            return this.builder.toString();
         }
     }
 }

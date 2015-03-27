@@ -64,7 +64,7 @@ public class ExecutorFactoryTest
         }
 
         @Override
-        public EnvironmentResponse execute(String command, long timeout) throws IOException
+        public EnvironmentResponse execute(List<String> command, String input, long timeout) throws IOException
         {
             return null;
         }

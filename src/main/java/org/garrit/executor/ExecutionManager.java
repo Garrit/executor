@@ -179,6 +179,8 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                         continue;
                     }
 
+                    executor.compile();
+
                     ArrayList<ExecutionCase> executionCases = new ArrayList<>();
                     for (ProblemCase problemCase : problem.getCases())
                     {
@@ -196,6 +198,15 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                     execution.setCases(executionCases);
 
                     ExecutionManager.this.outgoingQueue.offer(execution);
+
+                    try
+                    {
+                        executor.close();
+                    }
+                    catch (IOException e)
+                    {
+                        log.error("Failed to tear down executor", e);
+                    }
                 }
             }
             catch (InterruptedException e)

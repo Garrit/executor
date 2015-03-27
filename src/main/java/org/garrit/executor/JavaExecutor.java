@@ -2,7 +2,8 @@ package org.garrit.executor;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,6 +22,8 @@ import org.garrit.executor.ExecutionEnvironment.EnvironmentResponse;
 @Slf4j
 public class JavaExecutor extends Executor
 {
+    private static final int COMPILE_TIMEOUT = 60;
+
     public JavaExecutor(RegisteredSubmission submission, ExecutionEnvironment environment) throws IOException
     {
         super(submission, environment);
@@ -31,18 +34,17 @@ public class JavaExecutor extends Executor
     @Override
     public void compile()
     {
-        StringBuilder command = new StringBuilder();
-        command.append("javac");
+        ArrayList<String> command = new ArrayList<>();
+        command.add("javac");
 
         for (SubmissionFile file : this.getSubmission().getFiles())
         {
-            command.append(" ");
-            command.append(this.getUnpackedPath().resolve(file.getFilename()));
+            command.add(this.getUnpackedPath().resolve(file.getFilename()).toString());
         }
 
         try
         {
-            this.getEnvironment().execute(command.toString(), 0);
+            this.getEnvironment().execute(command, COMPILE_TIMEOUT);
         }
         catch (IOException e)
         {
@@ -58,14 +60,17 @@ public class JavaExecutor extends Executor
 
         EnvironmentResponse response;
 
-        Path input = this.getEnvironment().unpackInput(problemCase.getInput());
-        String command = String.format(
-                "cputime java -cp %s %s < %s",
-                this.getUnpackedPath(), this.getSubmission().getEntryPoint(), input);
+        ArrayList<String> command = new ArrayList<>();
+        command.addAll(Arrays.asList("/usr/local/bin/cputime", "java", "-cp"));
+        command.add(this.getUnpackedPath().toString());
+        command.add(this.getSubmission().getEntryPoint());
 
         try
         {
-            response = this.getEnvironment().execute(command, problemCase.getTimeLimit());
+            response = this.getEnvironment().execute(
+                    command,
+                    new String(problemCase.getInput()),
+                    problemCase.getTimeLimit());
         }
         catch (IOException e)
         {
