@@ -68,7 +68,7 @@ public class ExecutionManager implements ExecutorStatus, Closeable
     {
         log.debug("Enqueuing submission {}", submission);
 
-        if (ExecutorFactory.executorExists(submission))
+        if (!ExecutorFactory.executorExists(submission))
             throw new UnavailableExecutorException("No executor available for language");
 
         this.submissionQueue.add(submission);
