@@ -39,7 +39,7 @@ public class JavaExecutorTest
             executor.compile();
         }
 
-        assertEquals("javac /input/Hello.java", environment.getCommand());
+        assertEquals(Arrays.asList("javac", "/input/Hello.java"), environment.getCommand());
     }
 
     @Test
@@ -59,7 +59,8 @@ public class JavaExecutorTest
             executor.evaluate(problemCase);
         }
 
-        assertEquals("cputime java -cp /input Hello", environment.getCommand());
+        assertEquals(Arrays.asList("/usr/local/bin/cputime", "java", "-cp", "/input", "Hello"),
+                environment.getCommand());
     }
 
     @Getter

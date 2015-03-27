@@ -65,11 +65,13 @@ public class JavaExecutor extends Executor
         command.add(this.getUnpackedPath().toString());
         command.add(this.getSubmission().getEntryPoint());
 
+        String input = (problemCase.getInput() != null) ? new String(problemCase.getInput()) : null;
+
         try
         {
             response = this.getEnvironment().execute(
                     command,
-                    new String(problemCase.getInput()),
+                    input,
                     problemCase.getTimeLimit());
         }
         catch (IOException e)
