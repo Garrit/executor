@@ -1,5 +1,14 @@
 name: exec-00
+reporter: http://negotiator:7165
 problems: /path/to/problem/definitions
 
 executors:
-    java: org.garrit.executor.JavaExecutor
+  java: org.garrit.executor.JavaExecutor
+
+server:
+  applicationConnectors:
+  - type: http
+    port: 7166
+  adminConnectors:
+  - type: http
+    port: 7176
