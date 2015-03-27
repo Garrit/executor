@@ -3,7 +3,6 @@ package org.garrit.executor;
 import io.dropwizard.Application;
 import io.dropwizard.setup.Environment;
 
-import java.net.URI;
 import java.util.Map;
 
 import org.garrit.common.messages.statuses.Status;
@@ -38,7 +37,7 @@ public class ExecutorApplication extends Application<ExecutorConfiguration>
                     executorEntry.getKey(),
                     Class.forName(executorEntry.getValue()).asSubclass(Executor.class));
 
-        this.executor = new ExecutionManager(config.getProblems(), new URI(""));
+        this.executor = new ExecutionManager(config.getProblems(), config.getNegotiator());
 
         this.status = new Status(config.getName());
         this.status.setCapabilityStatus(executor);

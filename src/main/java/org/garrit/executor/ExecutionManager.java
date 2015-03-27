@@ -254,7 +254,7 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                     HttpEntity body;
 
                     client = HttpClients.createDefault();
-                    post = new HttpPost(this.negotiator.resolve("judge/" + execution.getId()));
+                    post = new HttpPost(this.negotiator.resolve("/judge/" + execution.getId()));
                     try
                     {
                         body = new ByteArrayEntity(mapper.writeValueAsBytes(execution));
