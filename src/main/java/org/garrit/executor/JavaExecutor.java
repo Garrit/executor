@@ -29,8 +29,6 @@ public class JavaExecutor extends Executor
         super(submission, environment);
     }
 
-    /* TODO: Figure out how to best deal with execution exceptions at this
-     * stage. Throw an exception and propagate it back to the mediator? */
     @Override
     public void compile() throws IOException
     {
