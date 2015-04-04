@@ -18,9 +18,12 @@ import org.apache.http.impl.client.HttpClients;
 import org.garrit.common.Problem;
 import org.garrit.common.ProblemCase;
 import org.garrit.common.Problems;
+import org.garrit.common.messages.ErrorSubmission;
+import org.garrit.common.messages.ErrorType;
 import org.garrit.common.messages.Execution;
 import org.garrit.common.messages.ExecutionCase;
 import org.garrit.common.messages.RegisteredSubmission;
+import org.garrit.common.messages.statuses.CapabilityType;
 import org.garrit.common.messages.statuses.ExecutorStatus;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -41,6 +44,7 @@ public class ExecutionManager implements ExecutorStatus, Closeable
     private final Path problems;
     private final ExecutionThread executionThread;
     private final ReportThread reportThread;
+    private final ErrorThread errorThread;
 
     /**
      * Submissions lined up and waiting to be executed.
@@ -48,15 +52,20 @@ public class ExecutionManager implements ExecutorStatus, Closeable
     LinkedBlockingQueue<RegisteredSubmission> submissionQueue = new LinkedBlockingQueue<>();
     /**
      * Submissions which have been executed and need to be sent back to the
-     * mediator.
+     * negotiator.
      */
     LinkedBlockingQueue<Execution> outgoingQueue = new LinkedBlockingQueue<>();
+    /**
+     * Errors in execution which need to be indicated to the negotiator.
+     */
+    LinkedBlockingQueue<ErrorSubmission<RegisteredSubmission>> errorQueue = new LinkedBlockingQueue<>();
 
     public ExecutionManager(Path problems, URI negotiator)
     {
         this.problems = problems;
         this.executionThread = new ExecutionThread();
         this.reportThread = new ReportThread(negotiator);
+        this.errorThread = new ErrorThread(negotiator);
     }
 
     /**
@@ -113,6 +122,7 @@ public class ExecutionManager implements ExecutorStatus, Closeable
         log.info("Starting execution manager");
         this.executionThread.start();
         this.reportThread.start();
+        this.errorThread.start();
     }
 
     @Override
@@ -121,6 +131,7 @@ public class ExecutionManager implements ExecutorStatus, Closeable
         log.info("Closing execution manager");
         this.executionThread.interrupt();
         this.reportThread.interrupt();
+        this.errorThread.interrupt();
     }
 
     /**
@@ -131,6 +142,11 @@ public class ExecutionManager implements ExecutorStatus, Closeable
      */
     private class ExecutionThread extends Thread
     {
+        public ExecutionThread()
+        {
+            super("Execution thread");
+        }
+
         @Override
         public void run()
         {
@@ -149,6 +165,13 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                     ExecutionEnvironment environment;
                     Executor executor;
 
+                    /* We may not need to report an error, but here's one
+                     * half-constructed and ready to go in the event we do. */
+                    ErrorSubmission<RegisteredSubmission> error = new ErrorSubmission<>();
+                    error.setId(submission.getId());
+                    error.setStage(CapabilityType.EXECUTOR);
+                    error.setSubmission(submission);
+
                     try
                     {
                         problem = Problems.problemByName(problems, submission.getProblem());
@@ -156,6 +179,11 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                     catch (IOException e)
                     {
                         log.error("Failed to retrieve problem definition", e);
+
+                        error.setType(ErrorType.E_INTERNAL);
+                        error.setMessage("Failed to retrieve problem definition");
+                        ExecutionManager.this.errorQueue.offer(error);
+
                         continue;
                     }
 
@@ -166,6 +194,11 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                     catch (IOException e)
                     {
                         log.error("Failed to retrieve an execution environment", e);
+
+                        error.setType(ErrorType.E_INTERNAL);
+                        error.setMessage("Failed to retrieve an execution environment");
+                        ExecutionManager.this.errorQueue.offer(error);
+
                         continue;
                     }
 
@@ -176,10 +209,28 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                     catch (UnavailableExecutorException e)
                     {
                         log.error("No executor available for submission", e);
+
+                        error.setType(ErrorType.E_INTERNAL);
+                        error.setMessage("No executor available for submission");
+                        ExecutionManager.this.errorQueue.offer(error);
+
                         continue;
                     }
 
-                    executor.compile();
+                    try
+                    {
+                        executor.compile();
+                    }
+                    catch (IOException e)
+                    {
+                        log.error("Failure compiling submission", e);
+
+                        error.setType(ErrorType.E_COMPILATION);
+                        error.setMessage("Failure compiling submission");
+                        ExecutionManager.this.errorQueue.offer(error);
+
+                        continue;
+                    }
 
                     ArrayList<ExecutionCase> executionCases = new ArrayList<>();
                     for (ProblemCase problemCase : problem.getCases())
@@ -230,6 +281,7 @@ public class ExecutionManager implements ExecutorStatus, Closeable
 
         public ReportThread(URI negotiator)
         {
+            super("Negotiator reporting thread");
             this.negotiator = negotiator;
         }
 
@@ -285,6 +337,77 @@ public class ExecutionManager implements ExecutorStatus, Closeable
             }
 
             log.info("Finishing negotiator reporting thread");
+        }
+    }
+
+    /**
+     * Thread to send errors back to the negotiator.
+     *
+     * @author Samuel Coleman <samuel@seenet.ca>
+     * @since 1.0.0
+     */
+    private class ErrorThread extends Thread
+    {
+        private final URI negotiator;
+
+        public ErrorThread(URI negotiator)
+        {
+            super("Error reporting thread");
+            this.negotiator = negotiator;
+        }
+
+        @Override
+        public void run()
+        {
+            log.info("Starting error reporting thread");
+
+            try
+            {
+                while (true)
+                {
+                    if (Thread.interrupted())
+                        break;
+
+                    ErrorSubmission<RegisteredSubmission> error = ExecutionManager.this.errorQueue.take();
+
+                    ObjectMapper mapper = new ObjectMapper();
+
+                    HttpClient client;
+                    HttpPost post;
+                    HttpEntity body;
+
+                    client = HttpClients.createDefault();
+                    post = new HttpPost(this.negotiator.resolve("error/" + error.getId()));
+                    try
+                    {
+                        body = new ByteArrayEntity(mapper.writeValueAsBytes(error));
+                    }
+                    catch (JsonProcessingException e)
+                    {
+                        log.error("Failed to encode outgoing error object to JSON", e);
+                        continue;
+                    }
+
+                    post.setHeader("Content-Type", "application/json");
+                    post.setEntity(body);
+
+                    try
+                    {
+                        client.execute(post);
+                    }
+                    catch (IOException e)
+                    {
+                        log.error("Failed to call negotiator with outgoing error object", e);
+                        continue;
+                    }
+                }
+            }
+            catch (InterruptedException e)
+            {
+                /* If we've been interrupted, just finish execution. */
+            }
+
+            log.info("Finishing error reporting thread");
         }
     }
 }

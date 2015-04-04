@@ -48,7 +48,7 @@ public abstract class Executor implements Closeable
      * any invocations of <code>{@link Executor#evaluate(Problem)}</code>. This
      * may be a no-op for executors for interpreted languages.
      */
-    public abstract void compile();
+    public abstract void compile() throws IOException;
 
     /**
      * Execute the submission for a given problem case.

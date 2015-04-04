@@ -32,7 +32,7 @@ public class JavaExecutor extends Executor
     /* TODO: Figure out how to best deal with execution exceptions at this
      * stage. Throw an exception and propagate it back to the mediator? */
     @Override
-    public void compile()
+    public void compile() throws IOException
     {
         ArrayList<String> command = new ArrayList<>();
         command.add("javac");
@@ -42,14 +42,11 @@ public class JavaExecutor extends Executor
             command.add(this.getUnpackedPath().resolve(file.getFilename()).toString());
         }
 
-        try
-        {
-            this.getEnvironment().execute(command, COMPILE_TIMEOUT);
-        }
-        catch (IOException e)
-        {
-            log.error("Failed execution", e);
-        }
+        EnvironmentResponse response = this.getEnvironment().execute(command, COMPILE_TIMEOUT);
+        if (response.exitCode != EnvironmentResponse.SUCCESS)
+            throw new IOException(
+                    String.format("Received non-0 exit code (%d): \n%s",
+                            response.exitCode, response.stderr));
     }
 
     @Override

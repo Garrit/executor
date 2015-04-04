@@ -81,6 +81,13 @@ public abstract class ExecutionEnvironment implements Closeable
     public static class EnvironmentResponse
     {
         /**
+         * A successful exit code.
+         * 
+         * @see #exitCode
+         */
+        public static final int SUCCESS = 0;
+
+        /**
          * The exit code of the process.
          */
         public final int exitCode;
