@@ -242,6 +242,12 @@ public class ExecutionManager implements ExecutorStatus, Closeable
                         catch (IOException e)
                         {
                             log.error("Failure while evaluating case", e);
+
+                            error.setType(ErrorType.E_RUNTIME);
+                            error.setMessage(e.getMessage());
+                            ExecutionManager.this.errorQueue.offer(error);
+
+                            continue;
                         }
                     }
 

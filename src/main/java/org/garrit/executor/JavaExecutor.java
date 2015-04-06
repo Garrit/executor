@@ -71,11 +71,9 @@ public class JavaExecutor extends Executor
         }
         catch (IOException e)
         {
-            log.error(String.format("Failure while evaluating problem case \"%s\"", problemCase.getName()), e);
-
-            executionCase.setErrorOccurred(true);
-            executionCase.setError(e.getMessage());
-            return executionCase;
+            throw new IOException(
+                    String.format("Failure while evaluating problem case \"%s\"", problemCase.getName()),
+                    e);
         }
 
         /* cputime gives the runtime as the last line of stderr. */
@@ -93,7 +91,6 @@ public class JavaExecutor extends Executor
             log.warn("Failed to encode environment output to UTF-8");
         }
 
-        executionCase.setErrorOccurred(false);
         return executionCase;
     }
 }
